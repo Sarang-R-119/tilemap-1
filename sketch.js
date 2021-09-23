@@ -9,21 +9,21 @@ var tilemap = [         //
     "wwwwwwwwwwwww      w",
     "w           w   v  w",//v
     "w           w      w",
-    "w     w     www    w",
-    "w    www           w",
-    "ww  v w            w",//v
-    "w              wwwww",
-    "www                w",
-    "w          v       w",//v
-    "w    wwwwwwwwww  www",
-    "w      w           w",
+    "w      w    www    w",
     "w     www          w",
-    "wwww         wwwwwww",
-    "w     h      w     w",//h
-    "w     w     www  p w",
-    "www  www           w",
-    "w                www",
-    "w h       wwwwwwwwww",//h
+    "ww  v  w           w",//v
+    "w              wwwww",
+    "www       v        w",
+    "w                  w",//v
+    "w     wwwwwwwww  www",
+    "w     www          w",
+    "w                  w",
+    "w     h      wwwwwww",
+    "w            w     w",//h
+    "ww wwwww     ww  p w",
+    "w                  w",
+    "w h              www",
+    "w         wwwwwwwwww",//h
     "wwwwwwwwwwwwwwwwwwww",
 ];
 
@@ -100,7 +100,7 @@ class Player {
             deltaY = 5;
         }
 
-        if(this.check_collision(deltaX, deltaY) == true){
+        if(this.check_collision_with_walls(deltaX, deltaY) == true){
             deltaX = 0;
             deltaY = 0;
         }
@@ -129,9 +129,11 @@ class Player {
 
 class Enemy{
     constructor(x, y, dir){
-        this.x = x;
-        this.y = y;
+        this.x = x + 10/6;
+        this.y = y + 10/6;
         this.dir = dir;
+        this.deltaY = enemy_velocity;
+        this.deltaX = enemy_velocity;
     }
 
     draw() {
@@ -189,49 +191,53 @@ class Enemy{
     move() {
 
         if (this.dir === 'vertical') {
-            var deltaY = 5;
 
-            if (this.y <= 33.33 || this.y >= height - 33.33) {
-                deltaY *= -1;
+            // if (this.y <= 33.33) {
+            //     this.deltaY = enemy_velocity;
+            // }
+
+            // if (this.y >= height - 33.33) {
+            //     this.deltaY = -1 * enemy_velocity;
+            // }
+
+            if(this.check_collision_with_walls() == true){
+                this.deltaY = -this.deltaY;
             }
 
-            if(this.check_collision(deltaY) == true){
-                deltaY = 0;
-            }
-
-            this.y += deltaY;
+            this.y += this.deltaY;
         }
 
         if (this.dir === 'horizontal') {
-            var deltaX = 5;
 
-            if (this.x <= 25 || this.x >= width - 25) {
-                deltaX *= -1;
+            // if (this.x <= 25) {
+            //     this.deltaX = enemy_velocity;
+            // }
+
+            // if (this.x >= width - 25) {
+            //     this.deltaX = -1 * enemy_velocity;
+            // }
+
+            if(this.check_collision_with_walls() == true){
+                this.deltaX *= -1;
             }
 
-            if(this.check_collision(deltaX) == true){
-                deltaX = 0;
-            }
-
-            this.x += deltaX;
+            this.x += this.deltaX;
         }
     }
 
-    check_collision_with_walls(deltaX, deltaY) {
+    check_collision_with_walls() {
       
         for (var i=0; i < walls.length; i++) {
-            
-            if ( vertical)
-            var horizontal_distance = abs(walls[i].x - (this.x + deltaX));
-            var vertical_distance = abs(walls[i].y - (this.y + deltaY));
-  
-            if(horizontal_distance <= 30 && vertical_distance <= 28.33) {
-              console.log('Collision with wall');
-              return true;
+
+            var vertical_distance = abs(walls[i].y - (this.y + this.deltaY));
+            var horizontal_distance = abs(walls[i].x - (this.x + this.deltaX));
+
+            if(vertical_distance <= 16.67 && horizontal_distance <= 12.5) {
+                console.log('Vertical Enemies: Collision with wall');
+                return true;
             }
-          }
-  
-          return false;
+        }  
+        return false;
       }
 }
 
@@ -270,6 +276,7 @@ var instructions_state = false; // Checking if the instructions has loaded
 var overBox_start = false; // Checking focus on button start
 var overBox_instructions = false; // Checking focus on button instructions
 var score = 0; // Game score
+var enemy_velocity = 2;
 
 var start_screen;
 var walls = [];
