@@ -30,10 +30,10 @@ var tilemap = [         //
 var customDiamond = [];
 
 function CustomDiamond() {
-
-    background(0, 0, 0, 0);
-    stroke(0);
-    strokeWeight(3);
+    push();
+    background(220, 220, 220, 0);
+    stroke(6, 140, 105);
+    strokeWeight(30);
     fill(6, 140, 105);
     line(200, 0, 150, 100);
     line(150, 100, 200, 200);
@@ -42,21 +42,7 @@ function CustomDiamond() {
     line(200, 0, 200, 200);
     line(150, 100, 250, 100);
     customDiamond.push(get(0, 0, width, height));
-
-}
-
-class Diamond {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.centerX = x + 10;
-        this.centerY = y + 10;
-        this.stolen = false;
-    }
-
-    draw() {
-        image(customDiamond[0], this.x, this.y, 20, 20);
-    }
+    pop();
 }
 
 class Wall{
@@ -112,6 +98,8 @@ class Player {
             deltaX = 0;
             deltaY = 0;
         }
+      
+        // this.check_collision_with_diamonds(deltaX, deltaY);
         
       this.x += deltaX;
       this.y += deltaY;
@@ -163,12 +151,12 @@ class Player {
         return false;
     }
 
-    check_collision_with_diamonds () {
+    check_collision_with_diamonds (deltaX, deltaY) {
 
         for (var i=0; diamonds.length; i++) {
             
-            var horizontal_distance = abs(diamonds[i].x - (this.x + deltaX));
-            var vertical_distance = abs(diamonds[i].y - (this.y + deltaY));
+            var horizontal_distance = abs(diamonds[i].centerX - (this.x + deltaX));
+            var vertical_distance = abs(diamonds[i].centerY - (this.y + deltaY));
             
 
             if(horizontal_distance <= 15 && vertical_distance <= 15) {
@@ -182,6 +170,37 @@ class Player {
         return false;
     }
 }
+
+class Diamond {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.centerX = x + 15;
+        this.centerY = y + 15;
+        this.stolen = false;
+    }
+
+    draw() {
+        image(customDiamond[0], this.x, this.y, 30, 30);
+    }
+  
+    check_theft_by_player() {
+
+        var horizontal_distance = abs((player.x) - this.centerX);
+        var vertical_distance = abs((player.y) - this.centerY);
+
+
+        if(horizontal_distance <= 15 && vertical_distance <= 15) {
+            console.log('Diamonds: Collision with player');
+            this.stolen = true;
+
+            return true;
+        }
+
+        return false;
+    }
+}
+
 
 class Enemy{
     constructor(x, y, dir){
@@ -352,15 +371,16 @@ var overBox_start = false; // Checking focus on button start
 var overBox_instructions = false; // Checking focus on button instructions
 var overBox_gameover = false;
 var game_over = false; // Checking if the game is over
-var score = 0; // Game score
+var game_won = false; // Checking if the game is won
+var total_score = 20; // Game score
 var enemy_velocity = 2;
 
 var start_screen;
 var walls = [];
 var vertical_enemies = [];
 var horizontal_enemies = [];
-var player;
 var diamonds = [];
+var player;
 var playerIsMoving = false;
 
 // Initializes the game components from the tilemap.
@@ -385,7 +405,7 @@ function initTilemap() {
                     break;
 
                 case 'd': 
-                    diamond.push(new Diamond(j*20, i*20));
+                    diamonds.push(new Diamond(j*20, i*20));
                     break;
             }
         }
@@ -412,16 +432,20 @@ function draw_enemies() {
 
 
 function draw_diamonds() {
+  var intact_diamonds = 0;
     for (var i=0; i < diamonds.length; i++) {
         if(!diamonds[i].stolen) {
             diamonds[i].draw();
+            intact_diamonds++;
         }
     }
+  player.score = total_score - intact_diamonds;
 }
 
 function setup() {
     createCanvas(400, 400);
     start_screen = new StartScreen(0,0);
+    CustomDiamond();
     initTilemap();
 }
   
@@ -492,7 +516,8 @@ function draw() {
     }
     else if(game_over)
     {
-      rectMode(CORNER);
+        initTilemap();
+        rectMode(CORNER);
         push();
           fill(0);
           textSize(40);
@@ -535,6 +560,21 @@ function draw() {
 
         for (var i=0; i < horizontal_enemies.length; i++) {
             horizontal_enemies[i].check_collision_with_player();
+        }
+      
+        for (var i=0; i < diamonds.length; i++) {
+            
+            diamonds[i].check_theft_by_player();
+        }
+
+        push();
+        textSize(25);
+        text('Score:' + player.score, 300, 20);
+        pop();
+      
+        if (player.score == 20) {
+          game_won = true;
+          game_over = true;
         }
     }
 }
