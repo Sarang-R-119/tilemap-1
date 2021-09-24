@@ -6,26 +6,58 @@
 // DATE:    September 17, 2021
 var tilemap = [         //
     "wwwwwwwwwwwwwwwwwwww",
-    "wwwwwwwwwwwww      w",
-    "w           w   v  w",//v
-    "w           w      w",
-    "w      w    www    w",
+    "wwwwwwwwwwwwwd   d w",
+    "wd          w   v  w",//v
+    "w   d  d    w d  d w",
+    "w      w   dwww    w",
     "w     www          w",
-    "ww  v  w           w",//v
-    "w              wwwww",
-    "www       v        w",
-    "w                  w",//v
+    "ww  v  w          dw",//v
+    "wd             wwwww",
+    "www d     v       dw",
+    "wd        d        w",//v
     "w     wwwwwwwww  www",
-    "w     www          w",
+    "w     wwwd        dw",
     "w                  w",
     "w     h      wwwwwww",
-    "w            w     w",//h
+    "w d          w d   w",//h
     "ww wwwww     ww  p w",
-    "w                  w",
+    "w d                w",
     "w h              www",
-    "w         wwwwwwwwww",//h
+    "w d       wwwwwwwwww",//h
     "wwwwwwwwwwwwwwwwwwww",
 ];
+
+var customDiamond = [];
+
+function CustomDiamond() {
+
+    background(0, 0, 0, 0);
+    stroke(0);
+    strokeWeight(3);
+    fill(6, 140, 105);
+    line(200, 0, 150, 100);
+    line(150, 100, 200, 200);
+    line(200, 200, 250, 100);
+    line(250, 100, 200, 0);
+    line(200, 0, 200, 200);
+    line(150, 100, 250, 100);
+    customDiamond.push(get(0, 0, width, height));
+
+}
+
+class Diamond {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.centerX = x + 10;
+        this.centerY = y + 10;
+        this.stolen = false;
+    }
+
+    draw() {
+        image(customDiamond[0], this.x, this.y, 20, 20);
+    }
+}
 
 class Wall{
     constructor(x, y){
@@ -39,30 +71,6 @@ class Wall{
         rect(this.x + 10, this.y + 10, 20, 20);
         fill(40, 87, 182);
         rect(this.x + 10, this.y + 10, 10, 10);
-
-        // if(playerIsMoving)
-        // {
-        //     var hor_dist = dist(this.x, 0, player.x, 0);
-        //     var vert_dist = dist(this.y, 0, player.y, 0);
-        //     if (hor_dist < 30) {
-        //         if (this.x > player.x) {
-        //             player.x -= (30-hor_dist);
-        //         }
-        //         else if (this.x < player.x) {
-        //             player.x += (30-hor_dist);
-        //         }
-        //     }
-
-        //     if (vert_dist < 30) {
-        //         if (this.y > player.y) {
-        //             player.y -= (30-vert_dist);
-        //         }
-        //         else if (this.y < player.y) {
-        //             player.y += (30-vert_dist);
-        //         }
-        //         player.draw();
-        //     }
-        // }
     }
 
 }
@@ -71,14 +79,14 @@ class Player {
     constructor(x, y){
         this.x = x;
         this.y = y;
+        this.score = 0;
     }
 
     draw() {
 
         fill(169, 49, 49);
         ellipse(this.x+10, this.y+10, 20, 20);
-        // this.check_collision();
-        // Checks if the left and right arrow keys are pressed and the player is moved consecutively.
+
     }
 
     move() {
@@ -148,6 +156,25 @@ class Player {
 
             if(vertical_distance <= 16.67 && horizontal_distance <= 12.5) {
                 console.log('Enemies: Collision with player');
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    check_collision_with_diamonds () {
+
+        for (var i=0; diamonds.length; i++) {
+            
+            var horizontal_distance = abs(diamonds[i].x - (this.x + deltaX));
+            var vertical_distance = abs(diamonds[i].y - (this.y + deltaY));
+            
+
+            if(horizontal_distance <= 15 && vertical_distance <= 15) {
+                console.log('Collision with diamond');
+                this.score++;
+                diamonds[i].stolen = true;
                 return true;
             }
         }
@@ -293,10 +320,13 @@ class StartScreen{
     }
 
     draw() {
-
-        rect(this.x + 50, this.y + 50, 300, 100)
-        textSize(40);
-        text("Start", this.x + 150, this.y + 115);
+        push();
+          fill(255);
+          rect(this.x + 50, this.y + 50, 300, 100)
+          fill(0);
+          textSize(40);
+          text("Start", this.x + 150, this.y + 115);
+        pop();
 
         rect(this.x + 50, this.y + 200, 300, 100);
         textSize(40);
@@ -320,6 +350,7 @@ var game_state = false; // Checking if the game has loaded
 var instructions_state = false; // Checking if the instructions has loaded
 var overBox_start = false; // Checking focus on button start
 var overBox_instructions = false; // Checking focus on button instructions
+var overBox_gameover = false;
 var game_over = false; // Checking if the game is over
 var score = 0; // Game score
 var enemy_velocity = 2;
@@ -329,6 +360,7 @@ var walls = [];
 var vertical_enemies = [];
 var horizontal_enemies = [];
 var player;
+var diamonds = [];
 var playerIsMoving = false;
 
 // Initializes the game components from the tilemap.
@@ -351,8 +383,10 @@ function initTilemap() {
                 case 'p':
                     player = new Player(j*20, i*20);
                     break;
-                // case 'c': coin.draw(j*20, i*20);
-                    // break;
+
+                case 'd': 
+                    diamond.push(new Diamond(j*20, i*20));
+                    break;
             }
         }
     }
@@ -377,15 +411,18 @@ function draw_enemies() {
 }
 
 
-// function draw_prizes() {
-//     for (var i=0; i < prizes.length(); i++) {
-//         prizes[i].draw();
-//     }
-// }
+function draw_diamonds() {
+    for (var i=0; i < diamonds.length; i++) {
+        if(!diamonds[i].stolen) {
+            diamonds[i].draw();
+        }
+    }
+}
 
 function setup() {
     createCanvas(400, 400);
     start_screen = new StartScreen(0,0);
+    initTilemap();
 }
   
 function draw() {
@@ -421,17 +458,24 @@ function draw() {
     }
     else if(instructions_state)
     {   
-        textSize(40);
-        text('Instructions', 100, 70);
-        textSize(20);
-        text("1. Move the player with arrow keys", 20, 120);
-        text("2. Obtain all the prizes to win", 20, 165);
-        text("3. You lose if you hit the enemy", 20, 210);
-        text("4. You can pass through the walls", 20, 255);
+        rectMode(CORNER);
+        push();
+          fill(0);
+          stroke(0);
+          textSize(40);
+          text('Instructions', 100, 70);
+          textSize(20);
+          text("1. Move the player with arrow keys", 20, 120);
+          text("2. Obtain all the prizes to win", 20, 165);
+          text("3. You lose if you hit the enemy", 20, 210);
+          text("4. You can pass through the walls", 20, 255);
 
-        rect(115, 285, 150, 75);
-        textSize(40);
-        text('Return', 127.5, 337.5);
+          fill(255);
+          rect(115, 285, 150, 75);
+          fill(0);
+          textSize(40);
+          text('Return', 127.5, 337.5);
+        pop();
 
         if (mouseX > 115 &&
             mouseY > 285 &&
@@ -448,17 +492,18 @@ function draw() {
     }
     else if(game_over)
     {
+      rectMode(CORNER);
         push();
-        fill(0);
-        textSize(40);
-        text('Game Over!', width/2 - 100, height/2 - 50);
+          fill(0);
+          textSize(40);
+          text('Game Over!', width/2 - 100, height/2 - 45);
         pop();
         push();
-        fill(255);
-        rect(115, 285, 150, 75);
-        fill(0);
-        textSize(40);
-        text('Return', 127.5, 337.5);
+          fill(255);
+          rect(115, 285, 150, 75);
+          fill(0);
+          textSize(40);
+          text('Return', 127.5, 337.5);
         pop();  
         overBox_start = false;
 
@@ -481,16 +526,16 @@ function draw() {
         // Draws all the components in the game
         draw_walls();
         draw_enemies();
+        draw_diamonds();
         player.draw();
         player.move();
         for (var i=0; i < vertical_enemies.length; i++) {
-        vertical_enemies[i].check_collision_with_player();
-    }
+          vertical_enemies[i].check_collision_with_player();
+        }
 
-    for (var i=0; i < horizontal_enemies.length; i++) {
-        horizontal_enemies[i].check_collision_with_player();
-    }
-        // draw_prizes(); 
+        for (var i=0; i < horizontal_enemies.length; i++) {
+            horizontal_enemies[i].check_collision_with_player();
+        }
     }
 }
 
