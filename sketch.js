@@ -516,13 +516,31 @@ function draw() {
     }
     else if(game_over)
     {
+        // Reinitializing the game
+        walls = [];
+        vertical_enemies = [];
+        horizontal_enemies = [];
+        diamonds = [];
         initTilemap();
+        overBox_start = false;
+        player.score = 0;
+      
         rectMode(CORNER);
-        push();
-          fill(0);
-          textSize(40);
-          text('Game Over!', width/2 - 100, height/2 - 45);
-        pop();
+      
+        if (!game_won){
+          push();
+            fill(0);
+            textSize(40);
+            text('Game Over!', width/2 - 100, height/2 - 45);
+          pop(); 
+        }
+        else{
+          push();
+            fill(0);
+            textSize(40);
+            text('Game Won!', width/2 - 100, height/2 - 45);
+          pop(); 
+        }
         push();
           fill(255);
           rect(115, 285, 150, 75);
@@ -530,7 +548,6 @@ function draw() {
           textSize(40);
           text('Return', 127.5, 337.5);
         pop();  
-        overBox_start = false;
 
         if (mouseX > 115 &&
             mouseY > 285 &&
@@ -582,6 +599,7 @@ function draw() {
 // Checking if the mouse is pressed while the cursor is over the logo i.e. overBox is true.
 // If yes, the game is loaded.
 function mousePressed() {
+  
     if (overBox_start) {
         game_state = true;
     } else {
