@@ -125,6 +125,35 @@ class Player {
 
         return false;
     }
+
+    check_collision_with_enemies () {
+
+        for (var i=0; vertical_enemies.length; i++) {
+
+            // return vertical_enemies[i].check_collision_with_player(this.x + deltaX, this.y + deltaY);
+            var vertical_distance = abs(this.y - (vertical_enemies[i].y + vertical_enemies[i].deltaY));
+            var horizontal_distance = abs(this.x - (vertical_enemies[i].x + vertical_enemies[i].deltaX));
+
+            if(vertical_distance <= 16.67 && horizontal_distance <= 12.5) {
+                console.log('Enemies: Collision with player');
+                return true;
+            }
+        }
+
+        for (var i=0; horizontal_enemies.length; i++) {
+
+            // return horizontal_enemies[i].check_collision_with_player(this.x + deltaX, this.y + deltaY);
+            var vertical_distance = abs(this.y - (horizontal_enemies[i].y + horizontal_enemies[i].deltaY));
+            var horizontal_distance = abs(this.x - (horizontal_enemies[i].x + horizontal_enemies[i].deltaX));
+
+            if(vertical_distance <= 16.67 && horizontal_distance <= 12.5) {
+                console.log('Enemies: Collision with player');
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
 
 class Enemy{
@@ -233,12 +262,28 @@ class Enemy{
             var horizontal_distance = abs(walls[i].x - (this.x + this.deltaX));
 
             if(vertical_distance <= 16.67 && horizontal_distance <= 12.5) {
-                console.log('Vertical Enemies: Collision with wall');
+                console.log('Enemies: Collision with wall');
                 return true;
             }
         }  
         return false;
-      }
+    }
+
+    check_collision_with_player() {
+
+        var vertical_distance = abs(player.y - (this.y + this.deltaY));
+        var horizontal_distance = abs(player.x - (this.x + this.deltaX));
+
+        if(vertical_distance <= 16.67 && horizontal_distance <= 12.5) {
+            console.log('Enemies: Collision with player');
+            game_over = true;
+            game_state = false;
+            
+            return true;
+        }
+
+        return false;
+    }
 }
 
 class StartScreen{
@@ -275,6 +320,7 @@ var game_state = false; // Checking if the game has loaded
 var instructions_state = false; // Checking if the instructions has loaded
 var overBox_start = false; // Checking focus on button start
 var overBox_instructions = false; // Checking focus on button instructions
+var game_over = false; // Checking if the game is over
 var score = 0; // Game score
 var enemy_velocity = 2;
 
@@ -330,6 +376,7 @@ function draw_enemies() {
     }
 }
 
+
 // function draw_prizes() {
 //     for (var i=0; i < prizes.length(); i++) {
 //         prizes[i].draw();
@@ -339,13 +386,12 @@ function draw_enemies() {
 function setup() {
     createCanvas(400, 400);
     start_screen = new StartScreen(0,0);
-    initTilemap();
 }
   
 function draw() {
     background(220);
 
-    if (!(game_state || instructions_state))
+    if (!(game_state || instructions_state || game_over))
     {
         start_screen.draw();
 
@@ -400,6 +446,35 @@ function draw() {
         }
         //exits to start_screen
     }
+    else if(game_over)
+    {
+        push();
+        fill(0);
+        textSize(40);
+        text('Game Over!', width/2 - 100, height/2 - 50);
+        pop();
+        push();
+        fill(255);
+        rect(115, 285, 150, 75);
+        fill(0);
+        textSize(40);
+        text('Return', 127.5, 337.5);
+        pop();  
+        overBox_start = false;
+
+        if (mouseX > 115 &&
+            mouseY > 285 &&
+            mouseX < 250 &&
+            mouseY < 360) {
+              
+            // Focusing on the instructions button.
+            overBox_gameover = false;
+        }
+        else {
+            overBox_gameover = true;
+        }
+        //exits to start_screen
+    }
     else if (game_state)
     {
         background(0);
@@ -408,6 +483,13 @@ function draw() {
         draw_enemies();
         player.draw();
         player.move();
+        for (var i=0; i < vertical_enemies.length; i++) {
+        vertical_enemies[i].check_collision_with_player();
+    }
+
+    for (var i=0; i < horizontal_enemies.length; i++) {
+        horizontal_enemies[i].check_collision_with_player();
+    }
         // draw_prizes(); 
     }
 }
@@ -425,5 +507,11 @@ function mousePressed() {
         instructions_state = true;
     } else {
         instructions_state = false;
+    }
+
+    if(overBox_gameover) {
+        game_over = true;
+    } else {
+        game_over = false;
     }
 }
